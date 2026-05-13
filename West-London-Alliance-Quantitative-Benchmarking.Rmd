@@ -1,0 +1,1816 @@
+---
+title: "West London Alliance Town Centre Analysis"
+author: "Professor Adam Dennett, UCL Centre for Advanced Spatial Analysis"
+date: '2022-09-01'
+output:
+  html_document: default
+  word_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(sf)
+library(readxl)
+library(here)
+library(lubridate)
+library(corrplot)
+library(plotrix)
+library(knitr)
+```
+
+## West London Alliance Benchmarking Quantitative Analysis, 2012 to 2021
+
+The following analysis is carried out for the 40 Town Centre zones in the WLA area with additional analysis for all significant business clusters (those with more than 15 commercial activity entities within 150 metres of each other - shown in purple) occurring within the hinterlands of each Town Centre, defined by the voroni polygons in Figure 1 below. 
+
+![Town Centres and Extended Clustered Activity Zones](./plots/WLA Town Centres and Extended Clustered Activity Areas.png)
+
+### Reading in Analysis Data
+
+This document contains various data processing and analysis / visualisation scripts to explore and benchmark Planning Use Class E evolution across the five West London Alliance Boroughs (Hounslow, Hillingdon, Barnet, Brent and Ealing). 
+
+Firstly, read in commerical activity data on all 40 Town Centres obtained from https://openlocal.uk/ 
+
+```{r ReadData}
+###Read Data and then create several new columns
+alldata <- read_excel("./project/class_e_floor_area_aggregations_combined_new.xlsx", 
+                      col_types = c("date", "text", "text", "text", "numeric", 
+                                    "text", "text", "numeric", "numeric", 
+                                    "numeric", "numeric")) %>% 
+  mutate(floor_area_all = floor_area_official + floor_area_clustered) %>% 
+  mutate(count_all = count_official + count_clustered) %>% 
+  mutate(avg_fl_area_official = floor_area_official / count_official) %>% 
+  mutate(avg_fl_area_clustered = floor_area_clustered / count_clustered) %>% 
+  mutate(avg_fl_area_all = floor_area_all / (count_official+count_clustered)) %>% 
+  mutate(new_date = ymd(period))
+
+#print table
+kable(alldata[1:5,1:8], caption = "Open Local Data Sample")
+
+```
+
+## Initial Summary Statistics - Commercial Floor Area and Business Activities
+
+Below are some summary tables and plots aggregating all data according to class E sub-class activity across the three time slices (2012, 2017 and 2021) in this study. Note that NA refers to totals across all class E categories in the period. 
+
+Class E sub-groups are classified as follows:
+
+| Class E Category | Sub-division	| Class | Description
+|:---|:--|:----|:-------------------------| 
+| E(a) | | Retail | Display or retail sale of goods, other than hot food
+| E(b) | | Food	| Sale of food and drink for consumption (mostly) on the premises
+| E(c) | | Services	| Provision of Services:
+| | (i)	| | Financial services,
+| | (ii)	| | Professional services (other than health or medical services), or
+| | (iii)	| | Other appropriate services in a commercial, business or service locality
+| E(d) | | Sport&Rec	| Indoor sport, recreation or fitness (not involving motorised vehicles or firearms or use as a swimming pool or skating rink,)
+| E(e) | | Medical	| Provision of medical or health services (except the use of premises attached to the residence of the consultant or practitioner)
+| E(f) | | Nursery	| Creche, day nursery or day centre (not including a residential use)
+| E(g) | | Office	| Uses which can be carried out in a residential area without detriment to its amenity:
+| | (i)	| | Offices to carry out any operational or administrative functions,
+| | (ii)	| | Research and development of products or processes
+| | (iii)	| | Industrial processes
+| Related Sui Generis	| | Related | Including Takeaway Food Outlet (Predominantly Off Premises), cinemas, drive in restaurant, drive through restaurant, bingo hall, concert hall
+
+
+
+### 2012 Statistics
+
+```{r Summary2012, echo=FALSE}
+#summary(alldata)
+###### 2012 ######
+sum_tab_2012_official <- alldata %>% 
+  filter(status=="all") %>% 
+  filter(period=="2012-12-31") %>% 
+  #filter(period=="2017-12-31") %>% 
+  #filter(period=="2021-12-31") %>% 
+  group_by(category) %>% 
+  summarise(official_floor_total = sum(floor_area_official), 
+            official_count = sum(count_official), 
+            official_avg_fl_area = mean(avg_fl_area_official)) %>% 
+  add_row(category = "f", official_floor_total = 0, official_count = 0, official_avg_fl_area = 0) %>% 
+  arrange(category)
+
+kable(sum_tab_2012_official, caption = "2012 Summary Statistics by Class E sub-class, official town centre areas")
+
+########plots
+options(scipen = 10000)
+sum_tab_2012_official %>% 
+  filter(category!="NA") %>% 
+  ggplot(aes(category, official_floor_total)) +
+  geom_col(aes(fill=category)) +
+  #facet_wrap(vars(town_centre_class)) +
+  xlab("Class E subgroup") +
+  ylab("Total Floor Area (sq m)") +
+  ggtitle("WLA 2012 Total Floor Area (official town centres) by Class E subgroup")#+
+  #ggsave("./plots/WLA-2012-Total-Floor-Area-by-Class-E-subgroup.png")
+
+sum_tab_2012_official %>% 
+  filter(category!="NA") %>% 
+  ggplot(aes(category, official_count)) +
+  geom_col(aes(fill=category)) +
+  xlab("Class E sub-class") +
+  ylab("Total Count of Businesses") +
+  ggtitle("WLA 2012 Total Businesses (official town centres) by Class E subgroup")#+
+  #ggsave("./plots/WLA-2012-Total-Businesses-by-Class-E-subgroup.png")
+
+sum_tab_2012_official %>% 
+  filter(category!="NA") %>% 
+  ggplot(aes(category, official_avg_fl_area)) +
+  geom_col(aes(fill=category)) +
+  xlab("Class E sub-class") +
+  ylab("Avg Floor Area (sq m)") +
+  ggtitle("WLA 2012 Average Floor Area (official town centres) by Class E subgroup")#+
+  #ggsave("./plots/WLA-2012-Avg-Floor-Area-by-Class-E-subgroup.png")
+```
+
+### 2017 Statistics
+
+```{r echo=FALSE}
+
+```
+
+```{r Summary2017, echo=FALSE}
+#summary(alldata)
+###### 2017 ######
+sum_tab_2017_official <- alldata %>% 
+  filter(status=="all") %>% 
+  #filter(period=="2012-12-31") %>% 
+  filter(period=="2017-12-31") %>% 
+  #filter(period=="2021-12-31") %>% 
+  group_by(category) %>% 
+  summarise(official_floor_total = sum(floor_area_official), 
+            official_count = sum(count_official), 
+            official_avg_fl_area = mean(avg_fl_area_official)) 
+
+kable(sum_tab_2017_official, caption = "2017 Summary Statistics by Class E sub-class, official town centre areas")
+
+########plots
+sum_tab_2017_official %>% 
+  filter(category!="NA") %>% 
+  ggplot(aes(category, official_floor_total)) +
+  geom_col(aes(fill=category)) +
+  xlab("Class E subgroup") +
+  ylab("Total Floor Area (sq m)") +
+  ggtitle("WLA 2017 Total Floor Area (official town centres) by Class E subgroup")#+
+  #ggsave("./plots/WLA-2017-Total-Floor-Area-by-Class-E-subgroup.png")
+
+sum_tab_2017_official %>% 
+  filter(category!="NA") %>% 
+  ggplot(aes(category, official_count)) +
+  geom_col(aes(fill=category)) +
+  xlab("Class E sub-class") +
+  ylab("Total Count of Businesses") +
+  ggtitle("WLA 2017 Total Businesses (official town centres) by Class E subgroup")#+
+  #ggsave("./plots/WLA-2017-Total-Businesses-by-Class-E-subgroup.png")
+
+sum_tab_2017_official %>% 
+  filter(category!="NA") %>% 
+  ggplot(aes(category, official_avg_fl_area)) +
+  geom_col(aes(fill=category)) +
+  xlab("Class E sub-class") +
+  ylab("Avg Floor Area (sq m)") +
+  ggtitle("WLA 2017 Average Floor Area (official town centres) by Class E subgroup")#+
+  #ggsave("./plots/WLA-2017-Avg-Floor-Area-by-Class-E-subgroup.png")
+
+
+```
+
+### 2021 Statistics
+
+```{r Summary2021, echo=FALSE}
+#################################
+###### 2021 ######
+
+sum_tab_2021_official <- alldata %>% 
+  filter(status=="all") %>% 
+  #filter(period=="2012-12-31") %>% 
+  #filter(period=="2017-12-31") %>% 
+  filter(period=="2021-12-31") %>% 
+  group_by(category) %>% 
+  summarise(official_floor_total = sum(floor_area_official), 
+            official_count = sum(count_official), 
+            official_avg_fl_area = mean(avg_fl_area_official)) 
+
+kable(sum_tab_2021_official, caption = "2021 Summary Statistics by Class E sub-class, official town centre areas")
+
+########plots
+sum_tab_2021_official %>% 
+  filter(category!="NA") %>% 
+  ggplot(aes(category, official_floor_total)) +
+  geom_col(aes(fill=category)) +
+  xlab("Class E subgroup") +
+  ylab("Total Floor Area (sq m)") +
+  ggtitle("WLA 2021 Total Floor Area by Class E subgroup")#+
+  #ggsave("./plots/WLA-2021-Total-Floor-Area-by-Class-E-subgroup.png")
+
+sum_tab_2021_official %>% 
+  filter(category!="NA") %>% 
+  ggplot(aes(category, official_count)) +
+  geom_col(aes(fill=category)) +
+  xlab("Class E sub-class") +
+  ylab("Total Count of Businesses") +
+  ggtitle("WLA 2021 Total Businesses by Class E subgroup")#+
+  #ggsave("./plots/WLA-2021-Total-Businesses-by-Class-E-subgroup.png")
+
+sum_tab_2021_official %>% 
+  filter(category!="NA") %>% 
+  ggplot(aes(category, official_avg_fl_area)) +
+  geom_col(aes(fill=category)) +
+  xlab("Class E sub-class") +
+  ylab("Avg Floor Area (sq m)") +
+  ggtitle("WLA 2021 Average Floor Area by Class E subgroup")#+
+  #ggsave("./plots/WLA-2021-Avg-Floor-Area-by-Class-E-subgroup.png")
+```
+
+### Key Points:
+
+- Retail is the dominant use class (both in terms of floor space and business counts) in Town Centres across the WLA study area with Office closely following. Other use classes are much less prevalent across town centre areas. 
+- In each town centre, dividing the total floor area by counts of businesses gives an average floor area for each use class. Most activities occupy average floor areas of around 125-150 sq m, with the exception of sports and recreation activities.  
+- Steady growth in both total floor area and number of businesses is evident across the whole WLA area and for all Class E sub-groups
+
+### Changes over the 10-year study period
+
+The next section presents change statistics from the beginning to the end of the study period
+
+```{r change2012_2021}
+#change_table_2012_2021 <-
+  #summary_table_2021[2:4] - summary_table_2012[2:4]
+  
+change_tab_2012_2021_official <- sum_tab_2021_official %>% 
+  mutate(official_floor_total = sum_tab_2021_official[2]-sum_tab_2012_official[2]) %>% 
+  mutate(official_count       = sum_tab_2021_official[3]-sum_tab_2012_official[3]) %>% 
+  mutate(official_avg_fl_area = sum_tab_2021_official[4]-sum_tab_2012_official[4]) 
+
+#class(change_tab_2012_2021_official$official_count)
+#write_csv(change_tab_2012_2021_official, "change_tab_2012_2021_official.csv")
+
+change_tab_2012_2021_official %>% 
+  filter(category!="NA") %>% 
+  ggplot(aes(category, official_floor_total$official_floor_total)) +
+  geom_col(aes(fill=category)) +
+  xlab("Class E sub-class") +
+  ylab("Total Floor Area (sq m)") +
+  ggtitle("WLA Change, 2012-2021, in Total Floor Area by Class E subgroup")#+
+#ggsave("./plots/WLA-2021-Avg-Floor-Area-by-Class-E-subgroup.png")
+
+change_tab_2012_2021_official %>% 
+  filter(category!="NA") %>% 
+  ggplot(aes(category, official_count$official_count)) +
+  geom_col(aes(fill=category)) +
+  xlab("Class E sub-class") +
+  ylab("Count of businesses") +
+  ggtitle("WLA Change, 2012-2021, in business count Class E subgroup")#+
+#ggsave("./plots/WLA-2021-Avg-Floor-Area-by-Class-E-subgroup.png")
+
+change_tab_2012_2021_official %>% 
+  filter(category!="NA") %>% 
+  ggplot(aes(category, official_avg_fl_area$official_avg_fl_area)) +
+  geom_col(aes(fill=category)) +
+  xlab("Class E sub-class") +
+  ylab("Avg Floor Area (sq m)") +
+  ggtitle("WLA Change, 2012-2021, in Average Floor Area by Class E subgroup")#+
+#ggsave("./plots/WLA-2021-Avg-Floor-Area-by-Class-E-subgroup.png")
+
+```
+
+```{r echo=FALSE}
+########over time plots
+#########All (occupied and void)
+
+#summary(official)
+options(scipen = 10000)
+
+alldata %>% 
+  #filter(is.na(category)) %>% 
+  filter(category!="NA") %>% 
+  #filter(category=="a") %>% 
+  filter(status=="all") %>% 
+  filter(planning_authority==c("Barnet")) %>% 
+  ggplot(aes(new_date, floor_area_official, colour=status)) +
+  geom_line(aes(colour=category)) + 
+  facet_wrap(vars(sitename), labeller = label_wrap_gen(width = 12, multi_line = TRUE)) +
+  xlab("Year") +
+  ylab("Total Floor Area (sq m)") +
+  ggtitle("Change in Total Floor Area", subtitle = "Barnet") +
+  guides(x = guide_axis(angle = 90))
+
+alldata %>% 
+  #filter(is.na(category)) %>% 
+  filter(category!="NA") %>% 
+  #filter(category=="a") %>% 
+  filter(status=="all") %>% 
+  filter(planning_authority==c("Ealing")) %>% 
+  ggplot(aes(new_date, floor_area_official, colour=status)) +
+  geom_line(aes(colour=category)) + 
+  facet_wrap(vars(sitename), labeller = label_wrap_gen(width = 12, multi_line = TRUE)) +
+  xlab("Year") +
+  ylab("Total Floor Area (sq m)") +
+  ggtitle("Change in Total Floor Area", subtitle = "Ealing") +
+  guides(x = guide_axis(angle = 90))
+
+alldata %>% 
+  #filter(is.na(category)) %>% 
+  filter(category!="NA") %>% 
+  #filter(category=="a") %>% 
+  filter(status=="all") %>% 
+  filter(planning_authority==c("Harrow")) %>% 
+  ggplot(aes(new_date, floor_area_official, colour=status)) +
+  geom_line(aes(colour=category)) + 
+  facet_wrap(vars(sitename), labeller = label_wrap_gen(width = 12, multi_line = TRUE)) +
+  xlab("Year") +
+  ylab("Total Floor Area (sq m)") +
+  ggtitle("Change in Total Floor Area", subtitle = "Harrow") +
+  guides(x = guide_axis(angle = 90))
+
+alldata %>% 
+  #filter(is.na(category)) %>% 
+  filter(category!="NA") %>% 
+  #filter(category=="a") %>% 
+  filter(status=="all") %>% 
+  filter(planning_authority==c("Hillingdon")) %>% 
+  ggplot(aes(new_date, floor_area_official, colour=status)) +
+  geom_line(aes(colour=category)) + 
+  facet_wrap(vars(sitename), labeller = label_wrap_gen(width = 12, multi_line = TRUE)) +
+  xlab("Year") +
+  ylab("Total Floor Area (sq m)") +
+  ggtitle("Change in Total Floor Area", subtitle = "Hillingdon") +
+  guides(x = guide_axis(angle = 90))
+
+alldata %>% 
+  #filter(is.na(category)) %>% 
+  filter(category!="NA") %>% 
+  #filter(category=="a") %>% 
+  filter(status=="all") %>% 
+  filter(planning_authority==c("Hounslow")) %>% 
+  ggplot(aes(new_date, floor_area_official, colour=status)) +
+  geom_line(aes(colour=category)) + 
+  facet_wrap(vars(sitename), labeller = label_wrap_gen(width = 12, multi_line = TRUE)) +
+  xlab("Year") +
+  ylab("Total Floor Area (sq m)") +
+  ggtitle("Change in Total Floor Area", subtitle = "Hounslow") +
+  guides(x = guide_axis(angle = 90))
+
+```
+
+### Borough Averages
+
+```{r}
+#####Summary - official town centre areas (count business / total floor area)
+#####by borough, over time by class E
+#options(scipen = 10000)
+alldata %>% 
+  #filter(is.na(category)) %>% 
+  filter(category!="NA") %>% 
+  #filter(category=="a") %>% 
+  filter(status=="all") %>% 
+  filter(planning_authority!="Brent") %>% 
+  group_by(new_date, planning_authority, category) %>% 
+  summarise(official_floor_total = sum(floor_area_official), 
+            official_count = sum(count_official), 
+            official_avg_fl_area = mean(avg_fl_area_official)) %>% 
+  ggplot(aes(new_date, official_floor_total, colour=status)) +
+  geom_line(aes(colour=category)) + 
+  facet_wrap(vars(planning_authority), labeller = label_wrap_gen(width = 12, multi_line = TRUE)) +
+  xlab("Year") +
+  ylab("Total Floor Area (sq m)") +
+  ggtitle("Change in Total Floor Area", subtitle = "All WLA Boroughs")+
+  guides(x = guide_axis(angle = 90))
+```
+
+
+
+### Key Points:
+
+- Growth in the total floor area given over to Class E activities is evident across all sub-groups. It is unclear whether this growth is through conversion of existing buildings or new-build. 
+- The total number of businesses across all sectors has grown, although the total number of new office-based businesses is the highest. 
+- Conversely growth in the number of businesses masks a serious down-sizing of the average floor area of office-based businesses by around 30 sq m. Office sub-division to get below tax-paying thresholds is likely driving this trend. 
+- Overall trends and those at borough level mask significant variation in activities and growth for each town centre area.
+
+## Initial Summary Statistics - Occupancy and Vacancy
+
+The table below reveals the changes in occupancy and vacancy across the whole WLA area between 2012 and 2021
+
+```{r}
+###### Occupied ######
+sum_tab_official <- alldata %>% 
+  filter(status=="occupied") %>% 
+  group_by(category, period) %>% 
+  summarise(official_floor_total = sum(floor_area_official), 
+            official_count = sum(count_official), 
+            official_avg_fl_area = mean(avg_fl_area_official)) 
+
+kable(sum_tab_official, caption = "Occupancy Statistics by Class E sub-class, official town centre areas")
+
+###### void ######
+sum_tab_official <- alldata %>% 
+  filter(status=="void") %>% 
+  group_by(category, period) %>% 
+  summarise(official_floor_total = sum(floor_area_official), 
+            official_count = sum(count_official), 
+            official_avg_fl_area = mean(avg_fl_area_official)) 
+
+kable(sum_tab_official, caption = "Vacancy Statistics by Class E sub-class, official town centre areas")
+
+```
+
+### Vacancy over time for each Town Centre area
+
+```{r}
+alldata %>% 
+  #filter(is.na(category)) %>% 
+  filter(category!="NA") %>% 
+  #filter(category=="a") %>% 
+  filter(status=="void") %>% 
+  filter(planning_authority!="Brent") %>% 
+  group_by(new_date, planning_authority, category) %>% 
+  summarise(official_floor_total = sum(floor_area_official), 
+            official_count = sum(count_official), 
+            official_avg_fl_area = mean(avg_fl_area_official)) %>% 
+  ggplot(aes(new_date, official_floor_total, colour=status)) +
+  geom_line(aes(colour=category)) + 
+  facet_wrap(vars(planning_authority), labeller = label_wrap_gen(width = 12, multi_line = TRUE)) +
+  xlab("Year") +
+  ylab("Total Floor Area (sq m)") +
+  ggtitle("Change in Vacant Total Floor Area", subtitle = "All WLA Boroughs")+
+  guides(x = guide_axis(angle = 90))
+```
+
+```{r echo=FALSE}
+alldata %>% 
+  #filter(is.na(category)) %>% 
+  filter(category!="NA") %>% 
+  #filter(category=="a") %>% 
+  filter(status=="void") %>% 
+  filter(planning_authority=="Barnet") %>%  
+  ggplot(aes(new_date, floor_area_official, colour=status)) +
+  geom_line(aes(colour=category)) + 
+  facet_wrap(vars(sitename), labeller = label_wrap_gen(width = 12, multi_line = TRUE)) +
+  xlab("Year") +
+  ylab("Total Floor Area (sq m)") +
+  ggtitle("Change in Vacant Total Floor Area", subtitle = "Barnet")+
+  guides(x = guide_axis(angle = 90))
+
+alldata %>% 
+  #filter(is.na(category)) %>% 
+  filter(category!="NA") %>% 
+  #filter(category=="a") %>% 
+  filter(status=="void") %>% 
+  filter(planning_authority=="Ealing") %>%  
+  ggplot(aes(new_date, floor_area_official, colour=status)) +
+  geom_line(aes(colour=category)) + 
+  facet_wrap(vars(sitename), labeller = label_wrap_gen(width = 12, multi_line = TRUE)) +
+  xlab("Year") +
+  ylab("Total Floor Area (sq m)") +
+  ggtitle("Change in Vacant Total Floor Area", subtitle = "Ealing")+
+  guides(x = guide_axis(angle = 90))
+
+alldata %>% 
+  #filter(is.na(category)) %>% 
+  filter(category!="NA") %>% 
+  #filter(category=="a") %>% 
+  filter(status=="void") %>% 
+  filter(planning_authority=="Harrow") %>%  
+  ggplot(aes(new_date, floor_area_official, colour=status)) +
+  geom_line(aes(colour=category)) + 
+  facet_wrap(vars(sitename), labeller = label_wrap_gen(width = 12, multi_line = TRUE)) +
+  xlab("Year") +
+  ylab("Total Floor Area (sq m)") +
+  ggtitle("Change in Vacant Total Floor Area", subtitle = "Harrow")+
+  guides(x = guide_axis(angle = 90))
+
+alldata %>% 
+  #filter(is.na(category)) %>% 
+  filter(category!="NA") %>% 
+  #filter(category=="a") %>% 
+  filter(status=="void") %>% 
+  filter(planning_authority=="Hillingdon") %>%  
+  ggplot(aes(new_date, floor_area_official, colour=status)) +
+  geom_line(aes(colour=category)) + 
+  facet_wrap(vars(sitename), labeller = label_wrap_gen(width = 12, multi_line = TRUE)) +
+  xlab("Year") +
+  ylab("Total Floor Area (sq m)") +
+  ggtitle("Change in Vacant Total Floor Area", subtitle = "Hillingdon")+
+  guides(x = guide_axis(angle = 90))
+
+alldata %>% 
+  #filter(is.na(category)) %>% 
+  filter(category!="NA") %>% 
+  #filter(category=="a") %>% 
+  filter(status=="void") %>% 
+  filter(planning_authority=="Hounslow") %>%  
+  ggplot(aes(new_date, floor_area_official, colour=status)) +
+  geom_line(aes(colour=category)) + 
+  facet_wrap(vars(sitename), labeller = label_wrap_gen(width = 12, multi_line = TRUE)) +
+  xlab("Year") +
+  ylab("Total Floor Area (sq m)") +
+  ggtitle("Change in Vacant Total Floor Area", subtitle = "Hounslow")+
+  guides(x = guide_axis(angle = 90))
+
+```
+
+### Key Points
+
+- Growth in overall floor space and counts business premises in town centre areas across the WLA area masks the fact that much of that growth is in premises that remain vacant
+- Taking retail and office premises, most of the growth occurred between 2012 and 2017, with a slowing in growth to 2021
+- The average floor areas of most occupied premises have remained relatively static across most sub-class groups, however occupied office space has reduced in size from an average of around 170 sq m to 113 sq m. 
+- Growth in vacant retail and, in particular, office space is quite dramatic over the 10 year period
+- vacant spaces are on average quite small, however the size of vacant commercial space has increased across the board with the average vacant office space now at just over 30 sq m, up from around 10 sq m in 2012. 
+- At the borough and town centre levels growth in vacant office space is driving vacancy rates in many place, particularly in Ealing where Ealing Town Centre itself shows a huge growth in vacant office space
+
+## Planning Use Class Change Over Time
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+official_sub <- alldata %>%
+  filter(category!="NA") %>% 
+  arrange(sitename, category)
+
+##########A
+official_sub %>% 
+  filter(category=="a") %>% 
+  filter(planning_authority!="Brent") %>% 
+  mutate(date_cat = as.factor(period)) %>% 
+ggplot(aes(planning_authority, floor_area_official)) +
+  geom_bar(aes(fill = date_cat), stat = "identity", position = "dodge") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) + 
+  facet_wrap(vars(status)) +
+  xlab("Borough") +
+  ylab("Total Floor Area (sq m)")+
+  labs(title = paste("Planning Use Class A"),
+    fill = "Date")
+
+##########B
+official_sub %>% 
+  filter(category=="b") %>% 
+  filter(planning_authority!="Brent") %>% 
+  mutate(date_cat = as.factor(period)) %>% 
+  ggplot(aes(planning_authority, floor_area_official)) +
+  geom_bar(aes(fill = date_cat), stat = "identity", position = "dodge") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) + 
+  facet_wrap(vars(status)) +
+  xlab("Borough") +
+  ylab("Total Floor Area (sq m)")+
+  labs(title = paste("Planning Use Class B"),
+       fill = "Date")
+
+##########C
+official_sub %>% 
+  filter(category=="c") %>% 
+  filter(planning_authority!="Brent") %>% 
+  mutate(date_cat = as.factor(period)) %>% 
+  ggplot(aes(planning_authority, floor_area_official)) +
+  geom_bar(aes(fill = date_cat), stat = "identity", position = "dodge") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) + 
+  facet_wrap(vars(status)) +
+  xlab("Borough") +
+  ylab("Total Floor Area (sq m)")+
+  labs(title = paste("Planning Use Class C"),
+       fill = "Date")
+
+##########D
+official_sub %>% 
+  filter(category=="d") %>% 
+  filter(planning_authority!="Brent") %>% 
+  mutate(date_cat = as.factor(period)) %>% 
+  ggplot(aes(planning_authority, floor_area_official)) +
+  geom_bar(aes(fill = date_cat), stat = "identity", position = "dodge") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) + 
+  facet_wrap(vars(status)) +
+  xlab("Borough") +
+  ylab("Total Floor Area (sq m)")+
+  labs(title = paste("Planning Use Class D"),
+       fill = "Date")
+
+##########E
+official_sub %>% 
+  filter(category=="e") %>% 
+  filter(planning_authority!="Brent") %>% 
+  mutate(date_cat = as.factor(period)) %>% 
+  ggplot(aes(planning_authority, floor_area_official)) +
+  geom_bar(aes(fill = date_cat), stat = "identity", position = "dodge") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) + 
+  facet_wrap(vars(status)) +
+  xlab("Borough") +
+  ylab("Total Floor Area (sq m)")+
+  labs(title = paste("Planning Use Class E"),
+       fill = "Date")
+
+##########G
+official_sub %>% 
+  filter(category=="g") %>% 
+  filter(planning_authority!="Brent") %>% 
+  mutate(date_cat = as.factor(period)) %>% 
+  ggplot(aes(planning_authority, floor_area_official)) +
+  geom_bar(aes(fill = date_cat), stat = "identity", position = "dodge") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) + 
+  facet_wrap(vars(status)) +
+  xlab("Borough") +
+  ylab("Total Floor Area (sq m)")+
+  labs(title = paste("Planning Use Class G"),
+       fill = "Date")
+
+##########Related
+official_sub %>% 
+  filter(category=="related") %>% 
+  filter(planning_authority!="Brent") %>% 
+  mutate(date_cat = as.factor(period)) %>% 
+  ggplot(aes(planning_authority, floor_area_official)) +
+  geom_bar(aes(fill = date_cat), stat = "identity", position = "dodge") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) + 
+  facet_wrap(vars(status)) +
+  xlab("Borough") +
+  ylab("Total Floor Area (sq m)")+
+  labs(title = paste("Planning Use Class Related Sui Generis"),
+       fill = "Date")
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+#########The code below processes the main dataset to enable averages to be
+#generated and used to provide overview and comparative statistics. It's not
+#the most 
+
+#Proportions of activity by year
+
+##subset by year first
+
+official_2012 <- alldata %>% 
+  filter(new_date == "2012-12-31") %>% 
+  mutate(WLA_overall = "WLA_Overall")
+official_2017 <- alldata %>% 
+  filter(new_date == "2017-12-31") %>% 
+  mutate(WLA_overall = "WLA_Overall")
+official_2021 <- alldata %>% 
+  filter(new_date == "2021-12-31") %>% 
+  mutate(WLA_overall = "WLA_Overall")
+
+#create wide dataframe and reorder
+# official_wide_2012 <- official_2012 %>% 
+#   pivot_wider(id_cols = sitename,
+#               names_from =  c(category, status),
+#               values_from = c(floor_area_official)) %>% 
+#   select(order(colnames(official_wide_2012))) %>% 
+#   select(sitename, everything())
+
+
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+##doing it in two steps works much better - reorders properly. 
+#step 1
+#
+official_wide_2012 <- official_2012 %>% 
+  pivot_wider(id_cols = sitename,
+              names_from =  c(category, status),
+              values_from = c(floor_area_official)) 
+##
+borough_wide_2012 <- official_2012 %>% 
+  group_by(planning_authority, category, status) %>% 
+  summarise(floor_area_official = sum(floor_area_official),
+            count_official = sum(count_official),
+            floor_area_clustered = sum(floor_area_clustered),
+            count_clustered = sum(count_clustered),
+            floor_area_all = sum(floor_area_all),
+            count_all = sum(count_all)) %>% 
+  pivot_wider(id_cols = planning_authority,
+              names_from =  c(category, status),
+              values_from = c(floor_area_official)) 
+
+###
+total_wide_2012 <- official_2012 %>% 
+  group_by(WLA_overall, category, status) %>% 
+  summarise(floor_area_official = sum(floor_area_official),
+            count_official = sum(count_official),
+            floor_area_clustered = sum(floor_area_clustered),
+            count_clustered = sum(count_clustered),
+            floor_area_all = sum(floor_area_all),
+            count_all = sum(count_all)) %>% 
+  pivot_wider(id_cols = WLA_overall,
+              names_from =  c(category, status),
+              values_from = c(floor_area_official)) 
+#
+official_wide_2017 <- official_2017 %>% 
+  pivot_wider(id_cols = sitename,
+              names_from =  c(category, status),
+              values_from = c(floor_area_official)) 
+##
+borough_wide_2017 <- official_2017 %>% 
+  group_by(planning_authority, category, status) %>% 
+  summarise(floor_area_official = sum(floor_area_official),
+            count_official = sum(count_official),
+            floor_area_clustered = sum(floor_area_clustered),
+            count_clustered = sum(count_clustered),
+            floor_area_all = sum(floor_area_all),
+            count_all = sum(count_all)) %>% 
+  pivot_wider(id_cols = planning_authority,
+              names_from =  c(category, status),
+              values_from = c(floor_area_official)) 
+
+###
+total_wide_2017 <- official_2017 %>% 
+  group_by(WLA_overall, category, status) %>% 
+  summarise(floor_area_official = sum(floor_area_official),
+            count_official = sum(count_official),
+            floor_area_clustered = sum(floor_area_clustered),
+            count_clustered = sum(count_clustered),
+            floor_area_all = sum(floor_area_all),
+            count_all = sum(count_all)) %>% 
+  pivot_wider(id_cols = WLA_overall,
+              names_from =  c(category, status),
+              values_from = c(floor_area_official)) 
+
+#
+official_wide_2021 <- official_2021 %>% 
+  pivot_wider(id_cols = sitename,
+              names_from =  c(category, status),
+              values_from = c(floor_area_official)) 
+##
+borough_wide_2021 <- official_2021 %>% 
+  group_by(planning_authority, category, status) %>% 
+  summarise(floor_area_official = sum(floor_area_official),
+            count_official = sum(count_official),
+            floor_area_clustered = sum(floor_area_clustered),
+            count_clustered = sum(count_clustered),
+            floor_area_all = sum(floor_area_all),
+            count_all = sum(count_all)) %>% 
+  pivot_wider(id_cols = planning_authority,
+              names_from =  c(category, status),
+              values_from = c(floor_area_official)) 
+
+###
+total_wide_2021 <- official_2021 %>% 
+  group_by(WLA_overall, category, status) %>% 
+  summarise(floor_area_official = sum(floor_area_official),
+            count_official = sum(count_official),
+            floor_area_clustered = sum(floor_area_clustered),
+            count_clustered = sum(count_clustered),
+            floor_area_all = sum(floor_area_all),
+            count_all = sum(count_all)) %>% 
+  pivot_wider(id_cols = WLA_overall,
+              names_from =  c(category, status),
+              values_from = c(floor_area_official)) 
+
+##############################################################################
+######################################
+########
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+#Clustereed
+###2012
+#
+clustered_wide_2012 <- official_2012 %>% 
+  pivot_wider(id_cols = sitename,
+              names_from =  c(category, status),
+              values_from = c(floor_area_clustered)) 
+
+##
+cl_borough_wide_2012 <- official_2012 %>% 
+  group_by(planning_authority, category, status) %>% 
+  summarise(floor_area_official = sum(floor_area_official),
+            count_official = sum(count_official),
+            floor_area_clustered = sum(floor_area_clustered),
+            count_clustered = sum(count_clustered),
+            floor_area_all = sum(floor_area_all),
+            count_all = sum(count_all)) %>% 
+  pivot_wider(id_cols = planning_authority,
+              names_from =  c(category, status),
+              values_from = c(floor_area_clustered)) 
+
+###
+cl_total_wide_2012 <- official_2012 %>% 
+  group_by(WLA_overall, category, status) %>% 
+  summarise(floor_area_official = sum(floor_area_official),
+            count_official = sum(count_official),
+            floor_area_clustered = sum(floor_area_clustered),
+            count_clustered = sum(count_clustered),
+            floor_area_all = sum(floor_area_all),
+            count_all = sum(count_all)) %>% 
+  pivot_wider(id_cols = WLA_overall,
+              names_from =  c(category, status),
+              values_from = c(floor_area_clustered))
+
+######2017
+#
+clustered_wide_2017 <- official_2017 %>% 
+  pivot_wider(id_cols = sitename,
+              names_from =  c(category, status),
+              values_from = c(floor_area_clustered)) 
+
+##
+cl_borough_wide_2017 <- official_2017 %>% 
+  group_by(planning_authority, category, status) %>% 
+  summarise(floor_area_official = sum(floor_area_official),
+            count_official = sum(count_official),
+            floor_area_clustered = sum(floor_area_clustered),
+            count_clustered = sum(count_clustered),
+            floor_area_all = sum(floor_area_all),
+            count_all = sum(count_all)) %>% 
+  pivot_wider(id_cols = planning_authority,
+              names_from =  c(category, status),
+              values_from = c(floor_area_clustered)) 
+
+###
+cl_total_wide_2017 <- official_2017 %>% 
+  group_by(WLA_overall, category, status) %>% 
+  summarise(floor_area_official = sum(floor_area_official),
+            count_official = sum(count_official),
+            floor_area_clustered = sum(floor_area_clustered),
+            count_clustered = sum(count_clustered),
+            floor_area_all = sum(floor_area_all),
+            count_all = sum(count_all)) %>% 
+  pivot_wider(id_cols = WLA_overall,
+              names_from =  c(category, status),
+              values_from = c(floor_area_clustered))
+
+#########2021
+#
+clustered_wide_2021 <- official_2021 %>% 
+  pivot_wider(id_cols = sitename,
+              names_from =  c(category, status),
+              values_from = c(floor_area_clustered)) 
+
+##
+cl_borough_wide_2021 <- official_2021 %>% 
+  group_by(planning_authority, category, status) %>% 
+  summarise(floor_area_official = sum(floor_area_official),
+            count_official = sum(count_official),
+            floor_area_clustered = sum(floor_area_clustered),
+            count_clustered = sum(count_clustered),
+            floor_area_all = sum(floor_area_all),
+            count_all = sum(count_all)) %>% 
+  pivot_wider(id_cols = planning_authority,
+              names_from =  c(category, status),
+              values_from = c(floor_area_clustered)) 
+
+###
+cl_total_wide_2021 <- official_2021 %>% 
+  group_by(WLA_overall, category, status) %>% 
+  summarise(floor_area_official = sum(floor_area_official),
+            count_official = sum(count_official),
+            floor_area_clustered = sum(floor_area_clustered),
+            count_clustered = sum(count_clustered),
+            floor_area_all = sum(floor_area_all),
+            count_all = sum(count_all)) %>% 
+  pivot_wider(id_cols = WLA_overall,
+              names_from =  c(category, status),
+              values_from = c(floor_area_clustered))
+#
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+#######################################################
+
+#step 2 - for some reason this ordering doesn't work in line above, but it does here
+official_wide_2012 <- official_wide_2012 %>% 
+  select(order(colnames(official_wide_2012))) %>% 
+  select(sitename, everything())
+
+official_wide_2017 <- official_wide_2017 %>% 
+  select(order(colnames(official_wide_2017))) %>% 
+  select(sitename, everything())
+
+official_wide_2021 <- official_wide_2021 %>% 
+  select(order(colnames(official_wide_2021))) %>% 
+  select(sitename, everything())
+
+clustered_wide_2012 <- clustered_wide_2012 %>% 
+  select(order(colnames(clustered_wide_2012))) %>% 
+  select(sitename, everything())
+
+clustered_wide_2017 <- clustered_wide_2017 %>% 
+  select(order(colnames(clustered_wide_2017))) %>% 
+  select(sitename, everything())
+
+clustered_wide_2021 <- clustered_wide_2021 %>% 
+  select(order(colnames(clustered_wide_2021))) %>% 
+  select(sitename, everything())
+
+total_wide_2012 <- total_wide_2012 %>% 
+  select(order(colnames(total_wide_2012))) %>% 
+  select(WLA_overall, everything())
+
+total_wide_2017 <- total_wide_2017 %>% 
+  select(order(colnames(total_wide_2017))) %>% 
+  select(WLA_overall, everything())
+
+total_wide_2021 <- total_wide_2021 %>% 
+  select(order(colnames(total_wide_2021))) %>% 
+  select(WLA_overall, everything())
+
+borough_wide_2012 <- borough_wide_2012 %>% 
+  select(order(colnames(borough_wide_2012))) %>% 
+  select(planning_authority, everything())
+
+borough_wide_2017 <- borough_wide_2017 %>% 
+  select(order(colnames(borough_wide_2017))) %>% 
+  select(planning_authority, everything())
+
+borough_wide_2021 <- borough_wide_2021 %>% 
+  select(order(colnames(borough_wide_2021))) %>% 
+  select(planning_authority, everything())
+
+#
+cl_total_wide_2012 <- cl_total_wide_2012 %>% 
+  select(order(colnames(cl_total_wide_2012))) %>% 
+  select(WLA_overall, everything())
+
+cl_total_wide_2017 <- cl_total_wide_2017 %>% 
+  select(order(colnames(cl_total_wide_2017))) %>% 
+  select(WLA_overall, everything())
+
+cl_total_wide_2021 <- cl_total_wide_2021 %>% 
+  select(order(colnames(cl_total_wide_2021))) %>% 
+  select(WLA_overall, everything())
+
+cl_borough_wide_2012 <- cl_borough_wide_2012 %>% 
+  select(order(colnames(cl_borough_wide_2012))) %>% 
+  select(planning_authority, everything())
+
+cl_borough_wide_2017 <- cl_borough_wide_2017 %>% 
+  select(order(colnames(cl_borough_wide_2017))) %>% 
+  select(planning_authority, everything())
+
+cl_borough_wide_2021 <- cl_borough_wide_2021 %>% 
+  select(order(colnames(cl_borough_wide_2021))) %>% 
+  select(planning_authority, everything())
+#
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+#calculate activity proportions
+official_wide_2012a <- official_wide_2012 %>% 
+  mutate(across(ends_with("_all"))/NA_all) %>% 
+  mutate(across(ends_with("_occupied"))/NA_occupied) %>% 
+  mutate(across(ends_with("_void"))/NA_void)
+
+borough_wide_2012a <- borough_wide_2012 %>% 
+  mutate(across(ends_with("_all"))/NA_all) %>% 
+  mutate(across(ends_with("_occupied"))/NA_occupied) %>% 
+  mutate(across(ends_with("_void"))/NA_void)
+
+total_wide_2012a <- total_wide_2012 %>% 
+  mutate(across(ends_with("_all"))/NA_all) %>% 
+  mutate(across(ends_with("_occupied"))/NA_occupied) %>% 
+  mutate(across(ends_with("_void"))/NA_void)
+
+official_wide_2017a <- official_wide_2017 %>% 
+  mutate(across(ends_with("_all"))/NA_all) %>% 
+  mutate(across(ends_with("_occupied"))/NA_occupied) %>% 
+  mutate(across(ends_with("_void"))/NA_void)
+
+borough_wide_2017a <- borough_wide_2017 %>% 
+  mutate(across(ends_with("_all"))/NA_all) %>% 
+  mutate(across(ends_with("_occupied"))/NA_occupied) %>% 
+  mutate(across(ends_with("_void"))/NA_void)
+
+total_wide_2017a <- total_wide_2017 %>% 
+  mutate(across(ends_with("_all"))/NA_all) %>% 
+  mutate(across(ends_with("_occupied"))/NA_occupied) %>% 
+  mutate(across(ends_with("_void"))/NA_void)
+
+official_wide_2021a <- official_wide_2021 %>% 
+  mutate(across(ends_with("_all"))/NA_all) %>% 
+  mutate(across(ends_with("_occupied"))/NA_occupied) %>% 
+  mutate(across(ends_with("_void"))/NA_void)
+
+borough_wide_2021a <- borough_wide_2021 %>% 
+  mutate(across(ends_with("_all"))/NA_all) %>% 
+  mutate(across(ends_with("_occupied"))/NA_occupied) %>% 
+  mutate(across(ends_with("_void"))/NA_void)
+
+total_wide_2021a <- total_wide_2021 %>% 
+  mutate(across(ends_with("_all"))/NA_all) %>% 
+  mutate(across(ends_with("_occupied"))/NA_occupied) %>% 
+  mutate(across(ends_with("_void"))/NA_void)
+
+clustered_wide_2012a <- clustered_wide_2012 %>% 
+  mutate(across(ends_with("_all"))/NA_all) %>% 
+  mutate(across(ends_with("_occupied"))/NA_occupied) %>% 
+  mutate(across(ends_with("_void"))/NA_void)
+
+cl_borough_wide_2012a <- cl_borough_wide_2012 %>% 
+  mutate(across(ends_with("_all"))/NA_all) %>% 
+  mutate(across(ends_with("_occupied"))/NA_occupied) %>% 
+  mutate(across(ends_with("_void"))/NA_void)
+
+cl_total_wide_2012a <- cl_total_wide_2012 %>% 
+  mutate(across(ends_with("_all"))/NA_all) %>% 
+  mutate(across(ends_with("_occupied"))/NA_occupied) %>% 
+  mutate(across(ends_with("_void"))/NA_void)
+
+clustered_wide_2017a <- clustered_wide_2017 %>% 
+  mutate(across(ends_with("_all"))/NA_all) %>% 
+  mutate(across(ends_with("_occupied"))/NA_occupied) %>% 
+  mutate(across(ends_with("_void"))/NA_void)
+
+cl_borough_wide_2017a <- cl_borough_wide_2017 %>% 
+  mutate(across(ends_with("_all"))/NA_all) %>% 
+  mutate(across(ends_with("_occupied"))/NA_occupied) %>% 
+  mutate(across(ends_with("_void"))/NA_void)
+
+cl_total_wide_2017a <- cl_total_wide_2017 %>% 
+  mutate(across(ends_with("_all"))/NA_all) %>% 
+  mutate(across(ends_with("_occupied"))/NA_occupied) %>% 
+  mutate(across(ends_with("_void"))/NA_void)
+
+clustered_wide_2021a <- clustered_wide_2021 %>% 
+  mutate(across(ends_with("_all"))/NA_all) %>% 
+  mutate(across(ends_with("_occupied"))/NA_occupied) %>% 
+  mutate(across(ends_with("_void"))/NA_void)
+
+cl_borough_wide_2021a <- cl_borough_wide_2021 %>% 
+  mutate(across(ends_with("_all"))/NA_all) %>% 
+  mutate(across(ends_with("_occupied"))/NA_occupied) %>% 
+  mutate(across(ends_with("_void"))/NA_void)
+
+cl_total_wide_2021a <- cl_total_wide_2021 %>% 
+  mutate(across(ends_with("_all"))/NA_all) %>% 
+  mutate(across(ends_with("_occupied"))/NA_occupied) %>% 
+  mutate(across(ends_with("_void"))/NA_void)
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+##################################################################
+##Now combine some wide dfs
+##2012
+
+official_proportions_combined_2012 <- bind_rows(
+  official_wide_2012a,
+  borough_wide_2012a,
+  total_wide_2012a
+) %>% relocate(c(WLA_overall, planning_authority))
+#write_csv(official_proportions_combined_2012, "official_proportions_combined_2012.csv")
+
+##calculate ratio to WLA average
+t12 <- total_wide_2012a %>% slice(rep(1:27, each = 40))
+b12 <- total_wide_2012a %>% slice(rep(1:27, each = 6))
+official_ratio_2012 <- official_wide_2012a[,2:24] - t12[,2:24]
+borough_ratio_2012 <- borough_wide_2012a[,2:24] - b12[,2:24]
+official_ratio_2012$sitename <- official_wide_2012a$sitename
+borough_ratio_2012$planning_authority <- borough_wide_2012a$planning_authority
+official_ratio_2012 <- official_ratio_2012 %>% relocate(c(sitename))
+borough_ratio_2012 <- borough_ratio_2012 %>% relocate(c(planning_authority))
+
+#clustered
+clustered_proportions_combined_2012 <- bind_rows(
+  clustered_wide_2012a,
+  cl_borough_wide_2012a,
+  cl_total_wide_2012a
+) %>% relocate(c(WLA_overall, planning_authority))
+
+##calculate ratio to WLA average
+c12 <- cl_total_wide_2012a %>% slice(rep(1:27, each = 40))
+clustered_ratio_2012 <- clustered_wide_2012a[,2:24] - c12[,2:24]
+clustered_ratio_2012$sitename <- clustered_wide_2012a$sitename
+clustered_ratio_2012 <- clustered_ratio_2012 %>% relocate(c(sitename))
+
+####2017
+
+official_proportions_combined_2017 <- bind_rows(
+  official_wide_2017a,
+  borough_wide_2017a,
+  total_wide_2017a
+) %>% relocate(c(WLA_overall, planning_authority))
+
+##calculate ratio to WLA average
+t17 <- total_wide_2017a %>% slice(rep(1:27, each = 40))
+b17 <- total_wide_2017a %>% slice(rep(1:27, each = 6))
+official_ratio_2017 <- official_wide_2017a[,2:23] - t17[,2:23]
+borough_ratio_2017 <- borough_wide_2017a[,2:23] - b17[,2:23]
+official_ratio_2017$sitename <- official_wide_2017a$sitename
+borough_ratio_2017$planning_authority <- borough_wide_2017a$planning_authority
+official_ratio_2017 <- official_ratio_2017 %>% relocate(c(sitename))
+borough_ratio_2017 <- borough_ratio_2017 %>% relocate(c(planning_authority))
+
+#clustered
+clustered_proportions_combined_2017 <- bind_rows(
+  clustered_wide_2017a,
+  cl_borough_wide_2017a,
+  cl_total_wide_2017a
+) %>% relocate(c(WLA_overall, planning_authority))
+
+##calculate ratio to WLA average
+c17 <- cl_total_wide_2017a %>% slice(rep(1:27, each = 40))
+clustered_ratio_2017 <- clustered_wide_2017a[,2:23] - c17[,2:23]
+clustered_ratio_2017$sitename <- clustered_wide_2017a$sitename
+clustered_ratio_2017 <- clustered_ratio_2017 %>% relocate(c(sitename))
+
+####2021
+
+official_proportions_combined_2021 <- bind_rows(
+  official_wide_2021a,
+  borough_wide_2021a,
+  total_wide_2021a
+) %>% relocate(c(WLA_overall, planning_authority))
+
+##calculate ratio to WLA average
+t21 <- total_wide_2021a %>% slice(rep(1:27, each = 40))
+b21 <- total_wide_2021a %>% slice(rep(1:27, each = 6))
+official_ratio_2021 <- official_wide_2021a[,2:25] - t21[,2:25]
+borough_ratio_2021 <- borough_wide_2021a[,2:25] - b21[,2:25]
+official_ratio_2021$sitename <- official_wide_2021a$sitename
+borough_ratio_2021$planning_authority <- borough_wide_2021a$planning_authority
+official_ratio_2021 <- official_ratio_2021 %>% relocate(c(sitename))
+borough_ratio_2021 <- borough_ratio_2021 %>% relocate(c(planning_authority))
+
+#clustered
+clustered_proportions_combined_2021 <- bind_rows(
+  clustered_wide_2021a,
+  cl_borough_wide_2021a,
+  cl_total_wide_2021a
+) %>% relocate(c(WLA_overall, planning_authority))
+
+##calculate ratio to WLA average
+c21 <- cl_total_wide_2021a %>% slice(rep(1:27, each = 40))
+clustered_ratio_2021 <- clustered_wide_2021a[,2:25] - c21[,2:25]
+clustered_ratio_2021$sitename <- clustered_wide_2021a$sitename
+clustered_ratio_2021 <- clustered_ratio_2021 %>% relocate(c(sitename))
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+###################################################################
+
+#pivot back to longer so we can plot some things
+
+##
+planning_authority_lut <- alldata %>% 
+  select(c(sitename,planning_authority)) %>% 
+  group_by(sitename, planning_authority) %>% 
+  summarise() %>% 
+  arrange(planning_authority)
+
+#proportions
+#1
+official_long_2012_props <- official_wide_2012a %>% 
+  pivot_longer(
+    cols = 2:ncol(official_wide_2012a),
+    names_to = c("category", "status"),
+    names_sep = "_"
+  ) %>% 
+  left_join(planning_authority_lut)
+#2
+off_total_long_2012_props <- total_wide_2012a %>% 
+  pivot_longer(
+    cols = 2:ncol(official_wide_2012a),
+    names_to = c("category", "status"),
+    names_sep = "_"
+  ) 
+#3
+off_borough_long_2012_props <- borough_wide_2012a %>% 
+  pivot_longer(
+    cols = 2:ncol(official_wide_2012a),
+    names_to = c("category", "status"),
+    names_sep = "_"
+  ) 
+
+#4
+official_long_2012_ratio <- official_ratio_2012 %>% 
+  pivot_longer(
+    cols = 2:ncol(official_ratio_2012),
+    names_to = c("category", "status"),
+    names_sep = "_"
+  ) %>% 
+  left_join(planning_authority_lut)
+#5
+off_borough_long_2012_ratio <- borough_ratio_2012 %>% 
+  pivot_longer(
+    cols = 2:ncol(borough_ratio_2012),
+    names_to = c("category", "status"),
+    names_sep = "_"
+  ) 
+
+##############################
+##########2017
+
+#1
+official_long_2017_props <- official_wide_2017a %>% 
+  pivot_longer(
+    cols = 2:ncol(official_wide_2017a),
+    names_to = c("category", "status"),
+    names_sep = "_"
+  ) %>% 
+  left_join(planning_authority_lut)
+
+#2
+off_total_long_2017_props <- total_wide_2017a %>% 
+  pivot_longer(
+    cols = 2:ncol(official_wide_2017a),
+    names_to = c("category", "status"),
+    names_sep = "_"
+  ) 
+
+#3
+off_borough_long_2017_props <- borough_wide_2017a %>% 
+  pivot_longer(
+    cols = 2:ncol(official_wide_2017a),
+    names_to = c("category", "status"),
+    names_sep = "_"
+  ) 
+
+#4
+official_long_2017_ratio <- official_ratio_2017 %>% 
+  pivot_longer(
+    cols = 2:ncol(official_ratio_2017),
+    names_to = c("category", "status"),
+    names_sep = "_"
+  ) %>% 
+  left_join(planning_authority_lut)
+
+#5
+off_borough_long_2017_ratio <- borough_ratio_2017 %>% 
+  pivot_longer(
+    cols = 2:ncol(borough_ratio_2017),
+    names_to = c("category", "status"),
+    names_sep = "_"
+  ) 
+
+#################################
+#############2021
+
+#1
+official_long_2021_props <- official_wide_2021a %>% 
+  pivot_longer(
+    cols = 2:ncol(official_wide_2021a),
+    names_to = c("category", "status"),
+    names_sep = "_"
+  ) %>% 
+  left_join(planning_authority_lut)
+
+#2
+off_total_long_2021_props <- total_wide_2021a %>% 
+  pivot_longer(
+    cols = 2:ncol(official_wide_2017a),
+    names_to = c("category", "status"),
+    names_sep = "_"
+  ) 
+
+#3
+off_borough_long_2021_props <- borough_wide_2021a %>% 
+  pivot_longer(
+    cols = 2:ncol(official_wide_2021a),
+    names_to = c("category", "status"),
+    names_sep = "_"
+  ) 
+
+#4
+
+official_long_2021_ratio <- official_ratio_2021 %>% 
+  pivot_longer(
+    cols = 2:ncol(official_ratio_2021),
+    names_to = c("category", "status"),
+    names_sep = "_"
+  ) %>% 
+  left_join(planning_authority_lut)
+
+#5
+off_borough_long_2021_ratio <- borough_ratio_2021 %>% 
+  pivot_longer(
+    cols = 2:ncol(borough_ratio_2021),
+    names_to = c("category", "status"),
+    names_sep = "_"
+  ) 
+
+#############################################
+
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+##write_csv(official_long_2021_props, "official_long_2021_props.csv")
+
+
+clustered_long_2012_props <- clustered_wide_2012a %>% 
+  pivot_longer(
+    cols = 2:ncol(clustered_wide_2012a),
+    names_to = c("category", "status"),
+    names_sep = "_"
+  ) %>% 
+  left_join(planning_authority_lut)
+
+clustered_long_2012_ratio <- clustered_ratio_2012 %>% 
+  pivot_longer(
+    cols = 2:ncol(clustered_ratio_2012),
+    names_to = c("category", "status"),
+    names_sep = "_"
+  ) %>% 
+  left_join(planning_authority_lut)
+
+clustered_long_2017_props <- clustered_wide_2017a %>% 
+  pivot_longer(
+    cols = 2:ncol(clustered_wide_2017a),
+    names_to = c("category", "status"),
+    names_sep = "_"
+  ) %>% 
+  left_join(planning_authority_lut)
+
+clustered_long_2017_ratio <- clustered_ratio_2017 %>% 
+  pivot_longer(
+    cols = 2:ncol(clustered_ratio_2017),
+    names_to = c("category", "status"),
+    names_sep = "_"
+  ) %>% 
+  left_join(planning_authority_lut)
+
+clustered_long_2021_props <- clustered_wide_2021a %>% 
+  pivot_longer(
+    cols = 2:ncol(clustered_wide_2021a),
+    names_to = c("category", "status"),
+    names_sep = "_"
+  ) %>% 
+  left_join(planning_authority_lut)
+
+clustered_long_2021_ratio <- clustered_ratio_2021 %>% 
+  pivot_longer(
+    cols = 2:ncol(clustered_ratio_2021),
+    names_to = c("category", "status"),
+    names_sep = "_"
+  ) %>% 
+  left_join(planning_authority_lut)
+
+###############################################################
+official_total_props_2012 <- official_long_2012_props %>% 
+  mutate(total_col = 1) %>% 
+  group_by(total_col, category, status) %>% 
+  summarise(value = mean(value), na.rm = TRUE)
+
+
+###############################################################
+
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+
+#pivot back to longer so we can plot some things
+official_long_2012 <- official_wide_2012 %>% 
+  pivot_longer(
+    cols = a_all:related_occupied,
+    names_to = c("category", "status"),
+    names_sep = "_"
+  ) %>% 
+  left_join(planning_authority_lut)
+
+#pivot back to longer so we can plot some things
+official_long_2017 <- official_wide_2017 %>% 
+  pivot_longer(
+    cols = a_all:related_occupied,
+    names_to = c("category", "status"),
+    names_sep = "_"
+  ) %>% 
+  left_join(planning_authority_lut)
+
+#pivot back to longer so we can plot some things
+official_long_2021 <- official_wide_2021 %>% 
+  pivot_longer(
+    cols = a_all:related_occupied,
+    names_to = c("category", "status"),
+    names_sep = "_"
+  ) %>% 
+  left_join(planning_authority_lut)
+
+
+#pivot back to longer so we can plot some things
+clustered_long_2012 <- clustered_wide_2012 %>% 
+  pivot_longer(
+    cols = a_all:related_occupied,
+    names_to = c("category", "status"),
+    names_sep = "_"
+  ) %>% 
+  left_join(planning_authority_lut)
+
+#pivot back to longer so we can plot some things
+clustered_long_2017 <- clustered_wide_2017 %>% 
+  pivot_longer(
+    cols = a_all:related_occupied,
+    names_to = c("category", "status"),
+    names_sep = "_"
+  ) %>% 
+  left_join(planning_authority_lut)
+
+#pivot back to longer so we can plot some things
+clustered_long_2021 <- clustered_wide_2021 %>% 
+  pivot_longer(
+    cols = a_all:related_occupied,
+    names_to = c("category", "status"),
+    names_sep = "_"
+  ) %>% 
+  left_join(planning_authority_lut)
+```
+
+### Benchmarking Against the Study Area
+
+The preceding analysis has presented a picture of commercial (class E) activity in the 40 town centres within WLA study area between 2012 and 2021 using, principally, total floor area statistics with other information on counts of businesses and average floor sizes. The analysis covered both vacant and occupied buildings. 
+
+However, while raw figures tell part of the story, comparison against 'expected' profiles can shed more light. The following analysis defines our expected situation as the WLA area average. 
+
+To begin, we explore local class E activity proportions for each Town Centre Area:
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+##Bar charts for each town centre
+off_borough_long_2012_props %>% 
+  #filter(is.na(category)) %>% 
+  #filter(category!="NA") %>% 
+  filter(planning_authority!=c("Brent")) %>% 
+  filter(status=="all") %>% 
+  filter(category!=c("NA")) %>% 
+  #filter(category!=c("a")) %>% 
+  #filter(sitename=="Ealing") %>% 
+  ggplot(aes(category, value, fill=category)) +
+  geom_col(aes(colour=category)) + 
+  facet_wrap(vars(planning_authority), labeller = label_wrap_gen(width = 12, multi_line = TRUE)) +
+  ylab("Proportion of Town Centre Floor Area") +
+  ggtitle(label="Borough Level Activity Proportions", subtitle = "2012") +
+  guides(x = guide_axis(angle = 90))
+#ggsave("./plots/official_long_2021_props.png", dpi = 900, units = "cm", width = 40)
+
+off_borough_long_2017_props %>% 
+  #filter(is.na(category)) %>% 
+  #filter(category!="NA") %>% 
+  filter(planning_authority!=c("Brent")) %>%  
+  filter(status=="all") %>% 
+  filter(category!=c("NA")) %>% 
+  #filter(category!=c("a")) %>% 
+  #filter(sitename=="Ealing") %>% 
+  ggplot(aes(category, value, fill=category)) +
+  geom_col(aes(colour=category)) + 
+  facet_wrap(vars(planning_authority), labeller = label_wrap_gen(width = 12, multi_line = TRUE)) +
+  ylab("Proportion of Town Centre Floor Area") +
+  ggtitle(label="Borough Level Activity Proportions", subtitle = "2017") +
+  guides(x = guide_axis(angle = 90))
+#ggsave("./plots/official_long_2021_props.png", dpi = 900, units = "cm", width = 40)
+
+off_borough_long_2021_props %>% 
+  #filter(is.na(category)) %>% 
+  #filter(category!="NA") %>% 
+  filter(planning_authority!=c("Brent")) %>% 
+  filter(status=="all") %>% 
+  filter(category!=c("NA")) %>% 
+  #filter(category!=c("a")) %>% 
+  #filter(sitename=="Ealing") %>% 
+  ggplot(aes(category, value, fill=category)) +
+  geom_col(aes(colour=category)) + 
+  facet_wrap(vars(planning_authority), labeller = label_wrap_gen(width = 12, multi_line = TRUE)) +
+  ylab("Proportion of Town Centre Floor Area") +
+  ggtitle(label="Borough Level Activity Proportions", subtitle = "2021") +
+  guides(x = guide_axis(angle = 90))
+#ggsave("./plots/official_long_2021_props.png", dpi = 900, units = "cm", width = 40)
+
+
+
+```
+
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+off_borough_long_2021_ratio %>% 
+  #filter(is.na(category)) %>% 
+  #filter(category!="NA") %>% 
+  filter(status=="all") %>% 
+  filter(category!=c("NA")) %>% 
+  #filter(category!=c("a")) %>% 
+  #filter(sitename=="Ealing") %>% 
+  filter(planning_authority!=c("Brent")) %>% 
+  ggplot(aes(category, value, fill=category)) +
+  geom_col(aes(colour=category)) + 
+  facet_wrap(vars(planning_authority), labeller = label_wrap_gen(width = 12, multi_line = TRUE)) +
+  xlab("category") +
+  ylab("Proportion of Borough Floor Area Relative to WLA Average") +
+  ggtitle(label="Borough Level Activity Proportions relative to WLA average", subtitle = "2021") +
+  guides(x = guide_axis(angle = 90))
+#ggsave("./plots/official_long_2021_props.png", dpi = 900, units = "cm", width = 40)
+  
+off_borough_long_2021_ratio %>% 
+  #filter(is.na(category)) %>% 
+  #filter(category!="NA") %>% 
+  filter(status=="void") %>% 
+  filter(category!=c("NA")) %>% 
+  #filter(category!=c("a")) %>% 
+  #filter(sitename=="Ealing") %>% 
+  filter(planning_authority!=c("Brent")) %>% 
+  ggplot(aes(category, value, fill=category)) +
+  geom_col(aes(colour=category)) + 
+  facet_wrap(vars(planning_authority), labeller = label_wrap_gen(width = 12, multi_line = TRUE)) +
+  xlab("category") +
+  ylab("Proportion of Borough Floor Area Relative to WLA Average") +
+  ggtitle(label="Borough Level vacancy proportions relative to WLA average", subtitle = "2021") +
+  guides(x = guide_axis(angle = 90))
+#ggsave("./plots/official_long_2021_props.png", dpi = 900, units = "cm", width = 40)  
+  
+```
+
+### Observations
+
+At the borough level, we see some small movement in activity level proportions - mainly relating to relative reductions in retail activities and increases in office activity between 2012 and 2021, but these are relatively minor. 
+
+When comparing these patterns with the WLA average, it becomes clear that Barnet and Ealing represent something approaching the average with Hillingdon showing well above average office activities and Hounslow, above average retail activities. 
+
+These variations are, of course, more pronounced for some Town Centre Areas. Below these profiles are provided for, first, occupied businesses, then vacant business properties:
+
+####Occupied Businesses 2021
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+##Bar charts for each town centre
+official_long_2021_ratio %>% 
+  #filter(is.na(category)) %>% 
+  #filter(category!="NA") %>% 
+  filter(status=="occupied") %>% 
+  filter(category!=c("NA")) %>% 
+  #filter(category!=c("a")) %>% 
+  filter(planning_authority=="Barnet") %>% 
+  ggplot(aes(category, value, fill=category)) +
+  geom_col(aes(colour=category)) + 
+  facet_wrap(vars(sitename), labeller = label_wrap_gen(width = 12, multi_line = TRUE)) +
+  xlab("category") +
+  ylab("Proportion of Town Centre Floor Area Relative to WLA Average") +
+  ggtitle(label="Town Centre Level Activity Proportions relative to WLA average, 2021", subtitle = "Brent") +
+  guides(x = guide_axis(angle = 90))
+#ggsave("./plots/official_long_2021_props.png", dpi = 900, units = "cm", width = 40)
+
+##Bar charts for each town centre
+official_long_2021_ratio %>% 
+  #filter(is.na(category)) %>% 
+  #filter(category!="NA") %>% 
+  filter(status=="occupied") %>% 
+  filter(category!=c("NA")) %>% 
+  #filter(category!=c("a")) %>% 
+  filter(planning_authority=="Ealing") %>% 
+  ggplot(aes(category, value, fill=category)) +
+  geom_col(aes(colour=category)) + 
+  facet_wrap(vars(sitename), labeller = label_wrap_gen(width = 12, multi_line = TRUE)) +
+  xlab("category") +
+  ylab("Proportion of Town Centre Floor Area Relative to WLA Average") +
+  ggtitle(label="Town Centre Level Activity Proportions relative to WLA average, 2021", subtitle = "Ealing") +
+  guides(x = guide_axis(angle = 90))
+#ggsave("./plots/official_long_2021_props.png", dpi = 900, units = "cm", width = 40)
+
+##Bar charts for each town centre
+official_long_2021_ratio %>% 
+  #filter(is.na(category)) %>% 
+  #filter(category!="NA") %>% 
+  filter(status=="occupied") %>% 
+  filter(category!=c("NA")) %>% 
+  #filter(category!=c("a")) %>% 
+  filter(planning_authority=="Harrow") %>% 
+  ggplot(aes(category, value, fill=category)) +
+  geom_col(aes(colour=category)) + 
+  facet_wrap(vars(sitename), labeller = label_wrap_gen(width = 12, multi_line = TRUE)) +
+  xlab("category") +
+  ylab("Proportion of Town Centre Floor Area Relative to WLA Average") +
+  ggtitle(label="Town Centre Level Activity Proportions relative to WLA average, 2021", subtitle = "Harrow") +
+  guides(x = guide_axis(angle = 90))
+#ggsave("./plots/official_long_2021_props.png", dpi = 900, units = "cm", width = 40)
+
+##Bar charts for each town centre
+official_long_2021_ratio %>% 
+  #filter(is.na(category)) %>% 
+  #filter(category!="NA") %>% 
+  filter(status=="occupied") %>% 
+  filter(category!=c("NA")) %>% 
+  #filter(category!=c("a")) %>% 
+  filter(planning_authority=="Hillingdon") %>% 
+  ggplot(aes(category, value, fill=category)) +
+  geom_col(aes(colour=category)) + 
+  facet_wrap(vars(sitename), labeller = label_wrap_gen(width = 12, multi_line = TRUE)) +
+  xlab("category") +
+  ylab("Proportion of Town Centre Floor Area Relative to WLA Average") +
+  ggtitle(label="Town Centre Level Activity Proportions relative to WLA average, 2021", subtitle = "Hillingdon") +
+  guides(x = guide_axis(angle = 90))
+#ggsave("./plots/official_long_2021_props.png", dpi = 900, units = "cm", width = 40)
+
+##Bar charts for each town centre
+official_long_2021_ratio %>% 
+  #filter(is.na(category)) %>% 
+  #filter(category!="NA") %>% 
+  filter(status=="occupied") %>% 
+  filter(category!=c("NA")) %>% 
+  #filter(category!=c("a")) %>% 
+  filter(planning_authority=="Hounslow") %>% 
+  ggplot(aes(category, value, fill=category)) +
+  geom_col(aes(colour=category)) + 
+  facet_wrap(vars(sitename), labeller = label_wrap_gen(width = 12, multi_line = TRUE)) +
+  xlab("category") +
+  ylab("Proportion of Town Centre Floor Area Relative to WLA Average") +
+  ggtitle(label="Town Centre Level Activity Proportions relative to WLA average, 2021", subtitle = "Hounslow") +
+  guides(x = guide_axis(angle = 90))
+#ggsave("./plots/official_long_2021_props.png", dpi = 900, units = "cm", width = 40)
+
+```
+
+####Vacant Businesses, 2021
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+##Bar charts for each town centre
+official_long_2021_ratio %>% 
+  #filter(is.na(category)) %>% 
+  #filter(category!="NA") %>% 
+  filter(status=="void") %>% 
+  filter(category!=c("NA")) %>% 
+  #filter(category!=c("a")) %>% 
+  filter(planning_authority=="Barnet") %>% 
+  ggplot(aes(category, value, fill=category)) +
+  geom_col(aes(colour=category)) + 
+  facet_wrap(vars(sitename), labeller = label_wrap_gen(width = 12, multi_line = TRUE)) +
+  xlab("category") +
+  ylab("Proportion of Town Centre Floor Area Relative to WLA Average") +
+  ggtitle(label="Town Centre Level Vacancy Proportions relative to WLA average, 2021", subtitle = "Barnet") +
+  guides(x = guide_axis(angle = 90))
+#ggsave("./plots/official_long_2021_props.png", dpi = 900, units = "cm", width = 40)
+
+##Bar charts for each town centre
+official_long_2021_ratio %>% 
+  #filter(is.na(category)) %>% 
+  #filter(category!="NA") %>% 
+  filter(status=="void") %>% 
+  filter(category!=c("NA")) %>% 
+  #filter(category!=c("a")) %>% 
+  filter(planning_authority=="Ealing") %>% 
+  ggplot(aes(category, value, fill=category)) +
+  geom_col(aes(colour=category)) + 
+  facet_wrap(vars(sitename), labeller = label_wrap_gen(width = 12, multi_line = TRUE)) +
+  xlab("category") +
+  ylab("Proportion of Town Centre Floor Area Relative to WLA Average") +
+  ggtitle(label="Town Centre Level Vacancy Proportions relative to WLA average, 2021", subtitle = "Ealing") +
+  guides(x = guide_axis(angle = 90))
+#ggsave("./plots/official_long_2021_props.png", dpi = 900, units = "cm", width = 40)
+
+##Bar charts for each town centre
+official_long_2021_ratio %>% 
+  #filter(is.na(category)) %>% 
+  #filter(category!="NA") %>% 
+  filter(status=="void") %>% 
+  filter(category!=c("NA")) %>% 
+  #filter(category!=c("a")) %>% 
+  filter(planning_authority=="Harrow") %>% 
+  ggplot(aes(category, value, fill=category)) +
+  geom_col(aes(colour=category)) + 
+  facet_wrap(vars(sitename), labeller = label_wrap_gen(width = 12, multi_line = TRUE)) +
+  xlab("category") +
+  ylab("Proportion of Town Centre Floor Area Relative to WLA Average") +
+  ggtitle(label="Town Centre Level Vacancy Proportions relative to WLA average, 2021", subtitle = "Harrow") +
+  guides(x = guide_axis(angle = 90))
+#ggsave("./plots/official_long_2021_props.png", dpi = 900, units = "cm", width = 40)
+
+##Bar charts for each town centre
+official_long_2021_ratio %>% 
+  #filter(is.na(category)) %>% 
+  #filter(category!="NA") %>% 
+  filter(status=="void") %>% 
+  filter(category!=c("NA")) %>% 
+  #filter(category!=c("a")) %>% 
+  filter(planning_authority=="Hillingdon") %>% 
+  ggplot(aes(category, value, fill=category)) +
+  geom_col(aes(colour=category)) + 
+  facet_wrap(vars(sitename), labeller = label_wrap_gen(width = 12, multi_line = TRUE)) +
+  xlab("category") +
+  ylab("Proportion of Town Centre Floor Area Relative to WLA Average") +
+  ggtitle(label="Town Centre Level Vacancy Proportions relative to WLA average, 2021", subtitle = "Hillingdon") +
+  guides(x = guide_axis(angle = 90))
+#ggsave("./plots/official_long_2021_props.png", dpi = 900, units = "cm", width = 40)
+
+##Bar charts for each town centre
+official_long_2021_ratio %>% 
+  #filter(is.na(category)) %>% 
+  #filter(category!="NA") %>% 
+  filter(status=="void") %>% 
+  filter(category!=c("NA")) %>% 
+  #filter(category!=c("a")) %>% 
+  filter(planning_authority=="Hounslow") %>% 
+  ggplot(aes(category, value, fill=category)) +
+  geom_col(aes(colour=category)) + 
+  facet_wrap(vars(sitename), labeller = label_wrap_gen(width = 12, multi_line = TRUE)) +
+  xlab("category") +
+  ylab("Proportion of Town Centre Floor Area Relative to WLA Average") +
+  ggtitle(label="Town Centre Level Vacancy Proportions relative to WLA average, 2021", subtitle = "Hounslow") +
+  guides(x = guide_axis(angle = 90))
+#ggsave("./plots/official_long_2021_props.png", dpi = 900, units = "cm", width = 40)
+
+```
+
+## Activivity Outside of Designated Town Centre Areas
+
+As is shown in Figure 1, the research team have identified a number of Class E business activity clusters outside of the boundaries of the official town centre areas. 
+
+Allocating these business clusters to their nearest Town Centre are and then including these businesses in the analysis presents quite a different picture of business activity in the WLA study area. 
+
+```{r}
+clustered_long_2021_props %>% 
+  #filter(is.na(category)) %>% 
+  #filter(category!="NA") %>% 
+  filter(status=="all") %>% 
+  filter(category!=c("NA")) %>% 
+  #filter(category!=c("a")) %>% 
+  filter(planning_authority=="Barnet") %>% 
+  ggplot(aes(category, value, fill=category)) +
+  geom_col(aes(colour=category)) + 
+  facet_wrap(vars(sitename), labeller = label_wrap_gen(width = 12, multi_line = TRUE)) +
+  xlab("category") +
+  ylab("Proportion of Town Centre Floor Area") +
+  ggtitle(label="Extended Town Centre Activity Proportions, 2021", subtitle = "Barnet") +
+  guides(x = guide_axis(angle = 90))
+
+clustered_long_2021_props %>% 
+  #filter(is.na(category)) %>% 
+  #filter(category!="NA") %>% 
+  filter(status=="all") %>% 
+  filter(category!=c("NA")) %>% 
+  #filter(category!=c("a")) %>% 
+  filter(planning_authority=="Ealing") %>% 
+  ggplot(aes(category, value, fill=category)) +
+  geom_col(aes(colour=category)) + 
+  facet_wrap(vars(sitename), labeller = label_wrap_gen(width = 12, multi_line = TRUE)) +
+  xlab("category") +
+  ylab("Proportion of Town Centre Floor Area") +
+  ggtitle(label="Extended Town Centre Activity Proportions, 2021", subtitle = "Ealing") +
+  guides(x = guide_axis(angle = 90))
+
+clustered_long_2021_props %>% 
+  #filter(is.na(category)) %>% 
+  #filter(category!="NA") %>% 
+  filter(status=="all") %>% 
+  filter(category!=c("NA")) %>% 
+  #filter(category!=c("a")) %>% 
+  filter(planning_authority=="Harrow") %>% 
+  ggplot(aes(category, value, fill=category)) +
+  geom_col(aes(colour=category)) + 
+  facet_wrap(vars(sitename), labeller = label_wrap_gen(width = 12, multi_line = TRUE)) +
+  xlab("category") +
+  ylab("Proportion of Town Centre Floor Area") +
+  ggtitle(label="Extended Town Centre Activity Proportions, 2021", subtitle = "Harrow") +
+  guides(x = guide_axis(angle = 90))
+
+clustered_long_2021_props %>% 
+  #filter(is.na(category)) %>% 
+  #filter(category!="NA") %>% 
+  filter(status=="all") %>% 
+  filter(category!=c("NA")) %>% 
+  #filter(category!=c("a")) %>% 
+  filter(planning_authority=="Hillingdon") %>% 
+  ggplot(aes(category, value, fill=category)) +
+  geom_col(aes(colour=category)) + 
+  facet_wrap(vars(sitename), labeller = label_wrap_gen(width = 12, multi_line = TRUE)) +
+  xlab("category") +
+  ylab("Proportion of Town Centre Floor Area") +
+  ggtitle(label="Extended Town Centre Activity Proportions, 2021", subtitle = "Hillingdon") +
+  guides(x = guide_axis(angle = 90))
+
+clustered_long_2021_props %>% 
+  #filter(is.na(category)) %>% 
+  #filter(category!="NA") %>% 
+  filter(status=="all") %>% 
+  filter(category!=c("NA")) %>% 
+  #filter(category!=c("a")) %>% 
+  filter(planning_authority=="Hounslow") %>% 
+  ggplot(aes(category, value, fill=category)) +
+  geom_col(aes(colour=category)) + 
+  facet_wrap(vars(sitename), labeller = label_wrap_gen(width = 12, multi_line = TRUE)) +
+  xlab("category") +
+  ylab("Proportion of Town Centre Floor Area") +
+  ggtitle(label="Extended Town Centre Activity Proportions, 2021", subtitle = "Hounslow") +
+  guides(x = guide_axis(angle = 90))
+
+
+```
+
+
+```{r}
+###### Occupied ######
+sum_tab_clustered1 <- alldata %>% 
+  filter(status=="occupied") %>% 
+  group_by(category, period) %>% 
+  summarise(clustered_floor_total = sum(floor_area_clustered), 
+            clustered_count = sum(count_clustered), 
+            clustered_avg_fl_area = mean(avg_fl_area_clustered)) 
+
+kable(sum_tab_clustered1, caption = "Occupancy Statistics by Class E sub-class, extended town centre areas")
+
+###### void ######
+sum_tab_clustered2 <- alldata %>% 
+  filter(status=="void") %>% 
+  group_by(category, period) %>% 
+  summarise(clustered_floor_total = sum(floor_area_clustered), 
+            clustered_count = sum(count_clustered), 
+            clustered_avg_fl_area = mean(avg_fl_area_clustered)) 
+
+kable(sum_tab_clustered2, caption = "Vacancy Statistics by Class E sub-class, extended town centre areas")
+
+
+
+```
+
+### Key Observations
+
+- Our analysis has shown that ignoring class E activity outside of Town Centre areas significantly under-estimates economic activity across the WLA boroughs
+- Office floor space and unit counts dominates outside of Town Centre areas, both in terms of occupany and vacancy statistics
+- the average floor area for retail businesses drops by around 20 sq m outside of Town Centre areas, while it increases by some 80 sq m for office space.
+- the average floor area for office space has been noticably decreasing since 2012 outside of town centre areas as well
+- vacancy statistics are driven by office vacancy and it is this class E sub-class which has shown the most increase in terms of counts and vacant floor space across the whole WLA area.  
+
